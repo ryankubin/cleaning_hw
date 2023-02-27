@@ -1,0 +1,77 @@
+Possible data issues
+    company1 
+        chemical_compositions
+            Sum of percentages does not have to equal 100
+            English names should be converted to scientific notation in compound
+            missing/incorrect data needs to be differentiated from 0s
+                should that sample be excluded?  What is the expected behavior    
+            All samples in chemical_compositions comes in with the same order and same set of compounds
+                safe to assume this will always be the case? 
+                    likely not, but in this case using it as a constant seems safe.  
+                Would want to apply additional checks prior to processing to confirm in the future
+            Should lat_long be one field or two?  
+                Depends on eventual storage and access goals, for now we'll leave it as two
+
+        assay_samples
+
+        overall
+            Both individual values and calculated mineral composition values should be within 0-100 as they represent percentages
+                Not clear from the prompt how this should be handled; likely there are some presumed upper bounds to some of the percentages that could be applied by compound (TiO2 seems like it goes from 0-10 at most, being generous, so could assume extra 0s in the number marking it to 50 or 100 could be removed/made into missing decimal points)
+            should samples be rejected if total mineral comp in assay_samples doesn't match calculated total? 
+            Should we spend time calculating the total, and ignore the provided total? 
+            Use both and mark mismatches?
+
+            If we have sample ids in one file that aren't present in another, should we ingest partial data or reject?
+
+    company2
+        long,lat- preference towards ISO 6709 personally, so will default to that and change the order
+        contains the first four compound types from chemical_compositions
+        structure found here more closely mimics the likely structured data store, makes sense to standardize towards this
+            this means we'll need to add columns for additional compound types for interim data structure
+            would prefer to standardize on scientific notation for compounds as they are the clearest representation
+        No totals listed, so not possible to make comparisons to prove validity
+
+sample ids should be saved, along with company id (and probably source file name to trace back any issues), but new ids should be generated within our system
+
+
+Final CSV columns
+    company_name,sample_id,lat,long,SiO2,TiO2,Al2O3,FeO3,MnO,MgO,CaO,K2O,Na2O,total_mineral_composition,calculated_mineral_composition
+
+
+Assumptions
+    company 1
+        both files contain the same sample ids
+
+        assay_samples
+            sample ids are provided in ascending order
+
+        chemical_compositions samples:
+            ALWAYS have 9 compound types
+            compound types are in the same order
+            sample ids are provided in ascending order
+
+    
+
+
+    non-matching total/calculated compositions are fine
+    coordinate resolution is recorded as is, and no issue with 5 vs 6 decimal points
+    if additional compounds were added to company 2s csv, they would appear in the same order as company 1 chemical_compositions
+
+
+Output
+    Company 1
+        Read by sample id in 'assay_samples'
+            skip if no numeric sample id
+                could also store read ids to ensure no duplication (or de-dupe in a previous step)
+            split lat/long 
+            iterate through chemical_compositions until new sample_id
+            Replace invalid percentages with 'None' (valid range is 0-100)
+            calculate mineral composition percentage
+        Output into soil_sample_data.py
+    Company 2
+        Read by sample id in 'assays'
+            Replace invalid percentages with NaN (valid range is 0-100)
+            Enrich with null values for missing compound types
+            calculate mineral composition percentage
+
+
