@@ -21,9 +21,9 @@ pwd
 ### To run:
 1. Open the python console from the main project directory (don't forge to swap back from the last step). 
 `python3`
-2. Import the cleaning file. 
+2. Import the cleaning fcn. 
 ```python
-import data_cleaner
+from data_cleaner import output_cleaned_csv
 ```
 3. Run the cleaning fcn, providing the path recorded in setup Step 7
 ```python
