@@ -1,4 +1,3 @@
-import sys
 import pandas as pd
 import numpy as np
 import datetime
@@ -55,23 +54,17 @@ def construct_output_file(output_directory, data_directory):
 def process_multiple_files(d, output_destination):
     sample_data_file = d / "assay_samples.csv"
     composition_data_file = d / "chemical_compositions.csv"
+    header_file = d.parent / "data_headers.csv"
 
-    hf = load_data(sample_data_file)
+    sample_df = load_data(sample_data_file)
     comp_df = load_data(composition_data_file)
+    headers_df = load_data(header_file)
 
     # split lat_long
-    hf[["lat", "lat_long"]] = hf["lat_long"].str.split(", ", expand=True)
+    sample_df[["lat", "lat_long"]] = sample_df["lat_long"].str.split(", ", expand=True)
 
     # rename lat_long to long for sanity's sake (could remove for performance)
-    # hf.rename(columns={"lat_long": "long"}, inplace=True)
-
-    # swap lat and total mineral composition columns
-    # could swap column locations at the end as well
-    # when outputting to csv
-    cols = list(hf.columns)
-    a, b = cols.index("lat"), cols.index("total_mineral_composition")
-    cols[b], cols[a] = cols[a], cols[b]
-    hf = hf[cols]
+    sample_df.rename(columns={"lat_long": "long"}, inplace=True)
 
     # group by id and transpose chemical composition values
     transposed_df = (
@@ -83,39 +76,36 @@ def process_multiple_files(d, output_destination):
     # remove incomplete rows
     transposed_df = transposed_df.dropna()
 
-    # Update columns with compound types and values
-    compound_types = [
-        "SiO2",
-        "TiO2",
-        "Al2O3",
-        "FeO3",
-        "MnO",
-        "MgO",
-        "CaO",
-        "K2O",
-        "Na2O",
-    ]
+    # Fetch column names, and update columns with compound types and values
+    column_names = list(headers_df.columns)
+    compound_types = column_names[4:13]
+
     compound_count = 0
     for compound in compound_types:
-        hf[compound] = transposed_df.iloc[:, compound_count].to_numpy()
+        sample_df[compound] = transposed_df.iloc[:, compound_count].to_numpy()
         compound_count += 1
 
     # Clean provided compound columns
-    for compound in hf.columns[-9:]:
-        hf[compound] = np.where(
-            (hf[compound] < 0) | (hf[compound] > 100), np.nan, hf[compound]
+    for compound in sample_df.columns[-9:]:
+        sample_df[compound] = np.where(
+            (sample_df[compound] < 0) | (sample_df[compound] > 100),
+            np.nan,
+            sample_df[compound],
         )
 
     # calculated mineral composition
-    hf["calculated_mineral_composition"] = hf.iloc[:, -len(compound_types) :].sum(
-        axis=1
-    )
+    sample_df["calculated_mineral_composition"] = sample_df.iloc[
+        :, -len(compound_types) :
+    ].sum(axis=1)
 
     # add company name
-    hf.insert(0, "company_name", d.name)
+    sample_df.insert(0, "company_name", d.name)
 
     # Output results to destination file
-    hf.to_csv(output_destination, mode="a", header=False, index=False)
+    # Use column names to match correct output order
+    sample_df.to_csv(
+        output_destination, mode="a", header=False, index=False, columns=column_names
+    )
     return f"Data added to file: {output_destination}"
 
 
