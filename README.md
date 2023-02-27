@@ -23,7 +23,7 @@ pwd
 `python3`
 2. Import the cleaning file. 
 ```python
-import data_cleaner.py
+import data_cleaner
 ```
 3. Run the cleaning fcn, providing the path recorded in setup Step 7
 ```python
