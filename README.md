@@ -5,7 +5,7 @@ Designed to clean and combine csv data files and produce a master file for subse
 2. Create a new venv. <br />
 `python3 -m venv venv`
 3. Activate your new virtual environment. <br />
-`source /venv/bin/activate`
+`source venv/bin/activate`
 4. Install the requirements. <br />
 `pip install -r requirements.txt`
 5. Navigate to the 'data' folder. <br />
