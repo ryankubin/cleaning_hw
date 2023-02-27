@@ -5,7 +5,7 @@ import datetime
 from pathlib import Path
 
 
-def output_cleaned_csv(rootdir="/Users/ryankubin/projects/data_cleaner/data2"):
+def output_cleaned_csv(rootdir="/Users/ryankubin/projects/data_cleaner/data"):
     p = Path(rootdir)
     failed = []
     successful = []
